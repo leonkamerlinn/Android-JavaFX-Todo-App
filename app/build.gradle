@@ -1,0 +1,97 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 26
+    buildToolsVersion "26.0.1"
+    defaultConfig {
+        applicationId "com.leon.javarx"
+        minSdkVersion 17
+        targetSdkVersion 26
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        targetCompatibility 1.8
+        sourceCompatibility 1.8
+    }
+
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+
+    //KOTLIN
+    implementation"org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
+
+    //ANDROID SUPPORT LIBRARY
+    implementation 'com.android.support.constraint:constraint-layout:1.0.2'
+    //noinspection GradleCompatible
+    implementation "com.android.support:appcompat-v7:$support_version"
+    implementation "com.android.support:support-compat:$support_version"
+    implementation "com.android.support:support-core-utils:$support_version"
+    implementation "com.android.support:support-core-ui:$support_version"
+    implementation "com.android.support:support-media-compat:$support_version"
+    implementation "com.android.support:support-fragment:$support_version"
+
+    implementation "com.android.support:cardview-v7:$support_version"
+    implementation "com.android.support:gridlayout-v7:$support_version"
+    implementation "com.android.support:mediarouter-v7:$support_version"
+    implementation "com.android.support:palette-v7:$support_version"
+    //noinspection GradleCompatible
+    implementation "com.android.support:recyclerview-v7:$support_version"
+    implementation "com.android.support:preference-v7:$support_version"
+    implementation "com.android.support:support-vector-drawable:$support_version"
+    implementation "com.android.support:animated-vector-drawable:$support_version"
+    implementation "com.android.support:support-annotations:$support_version"
+    //noinspection GradleCompatible
+    implementation "com.android.support:design:$support_version"
+    implementation "com.android.support:customtabs:$support_version"
+    implementation "com.android.support:percent:$support_version"
+    implementation "com.android.support:exifinterface:$support_version"
+
+    //GOOGLE PLAY SERVICES
+    //noinspection UseOfBundledGooglePlayServices
+    compile "com.google.android.gms:play-services:$gp_services"
+
+
+    //RXJAVA
+    implementation 'io.reactivex.rxjava2:rxandroid:2.0.1'
+    implementation 'io.reactivex.rxjava2:rxjava:2.1.3'
+
+    //RXBINDING
+    implementation "com.jakewharton.rxbinding2:rxbinding:$rxbinding_version"
+    implementation "com.jakewharton.rxbinding2:rxbinding-support-v4:$rxbinding_version"
+    implementation "com.jakewharton.rxbinding2:rxbinding-appcompat-v7:$rxbinding_version"
+    implementation "com.jakewharton.rxbinding2:rxbinding-design:$rxbinding_version"
+    implementation "com.jakewharton.rxbinding2:rxbinding-recyclerview-v7:$rxbinding_version"
+    implementation "com.jakewharton.rxbinding2:rxbinding-leanback-v17:$rxbinding_version"
+
+    //ANKO
+    //compile 'org.jetbrains.anko:anko-sdk25:0.10.0'
+    //compile 'org.jetbrains.anko:anko-design:0.8.3'
+    //compile 'org.jetbrains.anko:anko-appcompat-v7:0.10.0'
+
+    //DAGGER2
+    //implementation 'com.google.dagger:dagger:2.11'
+    //kapt 'com.google.dagger:dagger-compiler:2.11'
+    //provided 'org.glassfish:javax.annotation:10.0-b28'
+
+    //MY LIBRARY
+    //compile project(':application_resources')
+
+
+
+
+    //TEST
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.1'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
+}
