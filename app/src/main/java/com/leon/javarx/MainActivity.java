@@ -1,7 +1,17 @@
 package com.leon.javarx;
 
+import android.annotation.SuppressLint;
+import android.arch.core.util.Function;
+import android.arch.lifecycle.LifecycleActivity;
+import android.arch.lifecycle.LifecycleRegistry;
+import android.arch.lifecycle.LifecycleRegistryOwner;
+import android.arch.lifecycle.MutableLiveData;
+import android.arch.lifecycle.Transformations;
+import android.arch.persistence.room.Room;
 import android.content.Context;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -14,9 +24,12 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 import com.jakewharton.rxbinding2.view.RxView;
 import com.jakewharton.rxbinding2.widget.RxAdapterView;
+import com.leon.javarx.room.AppDatabase;
+import com.leon.javarx.room.User;
 
 import java.util.List;
 import java.util.Observer;
@@ -24,15 +37,20 @@ import java.util.function.Consumer;
 
 import io.reactivex.Flowable;
 import io.reactivex.Observable;
+import io.reactivex.Scheduler;
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.BiFunction;
+import io.reactivex.schedulers.Schedulers;
 
 
-public class MainActivity extends AppCompatActivity {
+
+public class MainActivity extends AppCompatActivity implements LifecycleRegistryOwner {
 
     private static final String LIST = "todoList";
     private static final String FILTER = "filter";
+    private final LifecycleRegistry mRegistry = new LifecycleRegistry(this);
 
     TodoList todoList;
     int filterPosition;
@@ -46,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
 
     // used to handle unsubscription during teardown of Activity
     CompositeDisposable compositeDisposable = new CompositeDisposable();
+    private final MutableLiveData<Boolean> mIsDatabaseCreated = new MutableLiveData<>();
 
 
     @Override
@@ -89,7 +108,7 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setAdapter(recyclerViewAdapter);
 
 
-        Observable<Integer> spinnerObservable = RxAdapterView.itemSelections(spinner).skip(1);
+        Observable<Integer> spinnerObservable = RxAdapterView.itemSelections(spinner);
         Observable<TodoList> todoListObservable = todoList.asObservable();
         BiFunction<Integer, TodoList, List<Todo>> spinnerTodoListBiFunction = (integer, todoList) -> {
             switch (integer) {
@@ -103,8 +122,9 @@ public class MainActivity extends AppCompatActivity {
         };
 
         // combine filter and todolist
-        Observable<List<Todo>> listTodoObservable = Observable.combineLatest(spinnerObservable, todoListObservable, spinnerTodoListBiFunction);
-        compositeDisposable.add(listTodoObservable.subscribe(recyclerViewAdapter.listTodoConsumer));
+        Disposable spinnerTodoListCompositeDisposable = Observable.combineLatest(spinnerObservable, todoListObservable, spinnerTodoListBiFunction)
+                .subscribe(recyclerViewAdapter.listTodoConsumer);
+        compositeDisposable.add(spinnerTodoListCompositeDisposable);
 
 
         Disposable buttonAddDisposable = RxView.clicks(btnAddTodo)
@@ -123,6 +143,36 @@ public class MainActivity extends AppCompatActivity {
 
         spinner.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, new String[]{"All", "Incomplete", "Completed"}));
         spinner.setSelection(filterPosition);
+
+
+        mIsDatabaseCreated.setValue(false);
+        //new CreateDatabaseTask().execute();
+
+        mIsDatabaseCreated.observeForever(aBoolean -> System.out.println("value: "+aBoolean));
+
+
+
+
+        Flowable<List<User>> source = Flowable.fromCallable(() -> {
+
+
+            getApplicationContext().deleteDatabase(AppDatabase.DATABASE_NAME);
+            AppDatabase db = Room.databaseBuilder(getApplicationContext(), AppDatabase.class, AppDatabase.DATABASE_NAME).build();
+            User user = new User("Leon", "Kamerlin");
+            db.userDao().insertAll(user, user);
+            List<User> users = db.userDao().getAll();
+
+
+            return users;
+        });
+
+        source.subscribeOn(Schedulers.newThread())
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(users -> {
+                   System.out.println(users);
+                   mIsDatabaseCreated.setValue(true);
+                });
     }
 
 
@@ -146,4 +196,58 @@ public class MainActivity extends AppCompatActivity {
         imm.hideSoftInputFromWindow(addInput.getWindowToken(), 0);
     }
 
+    @Override
+    public LifecycleRegistry getLifecycle() {
+        return mRegistry;
+    }
+
+
+
+
+
+
+    private class CreateDatabaseTask extends AsyncTask<String, Integer, AppDatabase> {
+
+        public CreateDatabaseTask() {
+            mIsDatabaseCreated.setValue(false);
+        }
+
+
+        @Override
+        protected AppDatabase doInBackground(String... strings) {
+            getApplicationContext().deleteDatabase("database-name");
+            AppDatabase db = Room.databaseBuilder(getApplicationContext(), AppDatabase.class, "database-name").build();
+            User user = new User("Leon", "Kamerlin");
+            db.userDao().insertAll(user, user);
+            System.out.println(db.userDao().getAll());
+            return db;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected void onPostExecute(AppDatabase appDatabase) {
+            super.onPostExecute(appDatabase);
+            mIsDatabaseCreated.setValue(true);
+
+
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... values) {
+            super.onProgressUpdate(values);
+        }
+    }
+
 }
+
+
+
+
+
+
+
+
